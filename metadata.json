@@ -1,0 +1,5 @@
+{
+  "name": "昆明旅游互动地图",
+  "description": "基于H5交互技术的昆明城市旅游导览系统，包含手绘地图、景点打卡与个性化足迹生成功能。",
+  "requestFramePermissions": ["geolocation"]
+}
