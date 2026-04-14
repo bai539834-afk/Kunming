@@ -14,6 +14,16 @@ export const POIS: POI[] = [
     category: 'nature',
     coords: [24.88, 102.68],
     description: '昆明的“明珠”，高原明珠，红嘴鸥的越冬胜地。',
+    history: '滇池形成于中新世末期，是著名的断层构造湖。古称昆明池，是云南省最大的淡水湖，素有“五百里滇池”之称。历史上，滇池不仅是昆明的母亲河，更是南诏、大理国时期的重要水利枢纽。',
+    gallery: [
+      'https://picsum.photos/seed/dianchi1/600/400',
+      'https://picsum.photos/seed/dianchi2/600/400',
+      'https://picsum.photos/seed/dianchi3/600/400'
+    ],
+    reviews: [
+      { user: '徐霞客', rating: 5, comment: '滇池之水，浩瀚如海。', date: '2024-01-15' },
+      { user: '小明', rating: 4, comment: '冬天来看海鸥非常震撼，就是人有点多。', date: '2024-02-20' }
+    ],
     image: 'https://picsum.photos/seed/dianchi/400/300',
     stamp: '🦢',
   },
@@ -22,7 +32,7 @@ export const POIS: POI[] = [
     name: '西山森林公园',
     category: 'nature',
     coords: [24.96, 102.63],
-    description: '俯瞰滇池的最佳位置，龙门石窟气势磅礴。',
+    description: '俯瞰滇池的最佳位置，山势险峻，林木苍翠。',
     image: 'https://picsum.photos/seed/xishan/400/300',
     stamp: '⛰️',
   },
@@ -50,6 +60,15 @@ export const POIS: POI[] = [
     category: 'history',
     coords: [25.05, 102.70],
     description: '百年名校，中国近代军事将领的摇篮。',
+    history: '创办于1909年，原为清朝为编练新军所建。它是中国近代史上著名的军事院校之一，与保定军校、黄埔军校并称。朱德、叶剑英等著名将领曾在此学习或任教。建筑风格独特，亮黄色的外墙已成为昆明的文化地标。',
+    gallery: [
+      'https://picsum.photos/seed/jiangwu1/600/400',
+      'https://picsum.photos/seed/jiangwu2/600/400'
+    ],
+    reviews: [
+      { user: '历史迷', rating: 5, comment: '建筑保存得非常好，非常有历史厚重感。', date: '2024-03-01' },
+      { user: '阿强', rating: 5, comment: '免费参观，里面的展览很详细。', date: '2024-03-10' }
+    ],
     image: 'https://picsum.photos/seed/jiangwutang/400/300',
     stamp: '⚔️',
   },

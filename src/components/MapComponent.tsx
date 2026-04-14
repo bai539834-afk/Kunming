@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { LocateFixed } from 'lucide-react';
 import { POI } from '../types';
 import { THEME } from '../constants';
 
@@ -25,18 +26,25 @@ interface MapComponentProps {
   pois: POI[];
   onSelectPOI: (poi: POI) => void;
   visitedIds: string[];
+  userLocation: [number, number] | null;
 }
 
-const RecenterMap = ({ coords }: { coords: [number, number] }) => {
+const RecenterMap = ({ coords, zoom = 15, trigger }: { coords: [number, number] | null, zoom?: number, trigger: any }) => {
   const map = useMap();
   useEffect(() => {
-    map.setView(coords, map.getZoom());
-  }, [coords, map]);
+    if (coords) {
+      map.flyTo(coords, zoom, {
+        duration: 1.5,
+        easeLinearity: 0.25
+      });
+    }
+  }, [trigger, map]); // Use a separate trigger to avoid fighting dependencies
   return null;
 };
 
-export default function MapComponent({ pois, onSelectPOI, visitedIds }: MapComponentProps) {
+export default function MapComponent({ pois, onSelectPOI, visitedIds, userLocation }: MapComponentProps) {
   const center: [number, number] = [25.04, 102.71]; // Kunming Center
+  const [mapTarget, setMapTarget] = useState<{ coords: [number, number], zoom: number, id: number } | null>(null);
 
   const createCustomIcon = (poi: POI) => {
     const isVisited = visitedIds.includes(poi.id);
@@ -59,6 +67,19 @@ export default function MapComponent({ pois, onSelectPOI, visitedIds }: MapCompo
     });
   };
 
+  const userIcon = L.divIcon({
+    className: 'user-location-marker',
+    html: `
+      <div class="relative">
+        <div class="w-6 h-6 bg-blue-500 rounded-full border-2 border-white shadow-lg"></div>
+        <div class="absolute -inset-2 bg-blue-500/30 rounded-full animate-ping"></div>
+        <div class="absolute -inset-4 bg-blue-500/10 rounded-full animate-pulse"></div>
+      </div>
+    `,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+
   return (
     <div className="w-full h-full relative">
       <MapContainer
@@ -66,36 +87,48 @@ export default function MapComponent({ pois, onSelectPOI, visitedIds }: MapCompo
         zoom={13}
         className="w-full h-full"
         zoomControl={false}
+        maxZoom={18}
+        minZoom={10}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
         />
+        <RecenterMap coords={mapTarget?.coords || null} zoom={mapTarget?.zoom} trigger={mapTarget?.id} />
+        
         {pois.map((poi) => (
           <Marker
             key={poi.id}
             position={poi.coords}
             icon={createCustomIcon(poi)}
             eventHandlers={{
-              click: () => onSelectPOI(poi),
+              click: () => {
+                onSelectPOI(poi);
+                setMapTarget({ coords: poi.coords, zoom: 15, id: Date.now() });
+              },
             }}
           />
         ))}
+
+        {userLocation && (
+          <Marker position={userLocation} icon={userIcon} />
+        )}
       </MapContainer>
       
-      {/* Custom Zoom Controls */}
-      <div className="absolute bottom-24 right-4 z-[1000] flex flex-col gap-2">
+      {/* Custom Zoom & Locate Controls */}
+      <div className="absolute bottom-24 right-4 z-[1000] flex flex-col gap-3">
         <button 
-          className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl font-bold text-emerald-700 active:scale-90 transition-transform"
-          onClick={() => { /* Map zoom logic handled by Leaflet default or custom hook if needed */ }}
+          aria-label="Locate Me"
+          className="w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center text-blue-600 active:scale-90 transition-all border border-gray-100 hover:bg-gray-50"
+          onClick={() => {
+            if (userLocation) {
+              setMapTarget({ coords: userLocation, zoom: 16, id: Date.now() });
+            } else {
+              alert('无法获取您的位置，请检查定位权限。');
+            }
+          }}
         >
-          +
-        </button>
-        <button 
-          className="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-2xl font-bold text-emerald-700 active:scale-90 transition-transform"
-          onClick={() => {}}
-        >
-          -
+          <LocateFixed size={24} />
         </button>
       </div>
     </div>

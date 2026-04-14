@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Download, Share2, X } from 'lucide-react';
+import { Download, Share2, X, MapPin } from 'lucide-react';
 import { POI, UserState } from '../types';
 import { POIS, THEME } from '../constants';
 
@@ -110,7 +110,15 @@ export default function FootprintCard({ userState, onClose }: FootprintCardProps
         </button>
         
         <div className="bg-white rounded-2xl overflow-hidden shadow-2xl">
-          {imgUrl ? (
+          {userState.visitedIds.length === 0 ? (
+            <div className="aspect-[9/16] flex flex-col items-center justify-center bg-gray-50 p-12 text-center">
+              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 mb-6">
+                <MapPin size={40} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-2">尚未点亮地标</h3>
+              <p className="text-gray-500 text-sm">快去昆明的街头走一走，点亮您的第一枚印章吧！</p>
+            </div>
+          ) : imgUrl ? (
             <img src={imgUrl} alt="Footprint Card" className="w-full h-auto" />
           ) : (
             <div className="aspect-[9/16] flex items-center justify-center bg-gray-100">

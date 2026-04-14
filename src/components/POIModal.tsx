@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, MapPin, CheckCircle2, Navigation, Info } from 'lucide-react';
+import { X, MapPin, CheckCircle2, Navigation, ChevronRight } from 'lucide-react';
 import { POI } from '../types';
 import { THEME } from '../constants';
 
@@ -8,11 +8,12 @@ interface POIModalProps {
   poi: POI | null;
   onClose: () => void;
   onCheckIn: (id: string) => void;
+  onViewDetails: (poi: POI) => void;
   isVisited: boolean;
   isNear: boolean;
 }
 
-export default function POIModal({ poi, onClose, onCheckIn, isVisited, isNear }: POIModalProps) {
+export default function POIModal({ poi, onClose, onCheckIn, onViewDetails, isVisited, isNear }: POIModalProps) {
   if (!poi) return null;
 
   return (
@@ -58,7 +59,7 @@ export default function POIModal({ poi, onClose, onCheckIn, isVisited, isNear }:
               )}
             </div>
 
-            <p className="text-gray-600 leading-relaxed text-sm">
+            <p className="text-gray-600 leading-relaxed text-sm line-clamp-2">
               {poi.description}
             </p>
 
@@ -66,7 +67,7 @@ export default function POIModal({ poi, onClose, onCheckIn, isVisited, isNear }:
               <button 
                 onClick={() => onCheckIn(poi.id)}
                 disabled={isVisited || !isNear}
-                className={`flex-1 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                className={`flex-[2] py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95 ${
                   isVisited 
                     ? 'bg-emerald-100 text-emerald-600 cursor-default' 
                     : isNear 
@@ -82,13 +83,17 @@ export default function POIModal({ poi, onClose, onCheckIn, isVisited, isNear }:
                 ) : (
                   <>
                     <Navigation size={20} />
-                    {isNear ? '立即打卡' : '未到达景点'}
+                    {isNear ? '立即打卡' : '未到达'}
                   </>
                 )}
               </button>
               
-              <button className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 active:scale-90 transition-transform">
-                <Info size={20} />
+              <button 
+                onClick={() => onViewDetails(poi)}
+                className="flex-1 rounded-xl bg-emerald-50 text-emerald-600 font-bold text-xs flex items-center justify-center gap-1 active:scale-90 transition-transform"
+              >
+                详情
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>

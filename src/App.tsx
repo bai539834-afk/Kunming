@@ -4,15 +4,21 @@ import { Bird, MapPin, Sparkles } from 'lucide-react';
 import MapComponent from './components/MapComponent';
 import Sidebar from './components/Sidebar';
 import POIModal from './components/POIModal';
+import POIDetailPage from './components/POIDetailPage';
 import FootprintCard from './components/FootprintCard';
 import { POI, POICategory, UserState } from './types';
 import { POIS, THEME } from './constants';
+import { getDistance, cn } from './lib/utils';
 
 export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<POICategory | 'all'>('all');
   const [selectedPOI, setSelectedPOI] = useState<POI | null>(null);
+  const [detailPOI, setDetailPOI] = useState<POI | null>(null);
   const [showFootprint, setShowFootprint] = useState(false);
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
+  const [isNear, setIsNear] = useState(false);
   const [userState, setUserState] = useState<UserState>(() => {
     const saved = localStorage.getItem('kunming_user_state');
     return saved ? JSON.parse(saved) : {
@@ -21,6 +27,47 @@ export default function App() {
       daysInKunming: 1
     };
   });
+
+  // Track User Location
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setGeoError('您的浏览器不支持地理定位');
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setUserLocation([pos.coords.latitude, pos.coords.longitude]);
+        setGeoError(null);
+      },
+      (err) => {
+        console.error('Geolocation error:', err);
+        if (err.code === 1) setGeoError('请开启定位权限以体验完整功能');
+        else if (err.code === 2) setGeoError('暂时无法获取位置信息');
+        else if (err.code === 3) setGeoError('定位请求超时');
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  // Update isNear based on actual distance
+  useEffect(() => {
+    const currentPOI = selectedPOI || detailPOI;
+    if (!currentPOI || !userLocation) {
+      setIsNear(false);
+      return;
+    }
+
+    const dist = getDistance(
+      userLocation[0], userLocation[1],
+      currentPOI.coords[0], currentPOI.coords[1]
+    );
+
+    // PDF 5.2.2: Threshold R = 200 meters
+    setIsNear(dist <= 200);
+  }, [selectedPOI, detailPOI, userLocation]);
 
   useEffect(() => {
     localStorage.setItem('kunming_user_state', JSON.stringify(userState));
@@ -35,26 +82,6 @@ export default function App() {
   const filteredPOIs = activeCategory === 'all' 
     ? POIS 
     : POIS.filter(p => p.category === activeCategory);
-
-  const [isNear, setIsNear] = useState(false);
-
-  // Simulate Geolocation check (PDF 5.2.2)
-  useEffect(() => {
-    if (!selectedPOI) {
-      setIsNear(false);
-      return;
-    }
-
-    // In a real app, we'd use navigator.geolocation.getCurrentPosition
-    // and calculate distance. Here we simulate "being near" for the demo.
-    const checkDistance = () => {
-      // Simulate 80% chance of being "near" for demo purposes
-      setIsNear(true); 
-    };
-
-    const interval = setInterval(checkDistance, 5000);
-    return () => clearInterval(interval);
-  }, [selectedPOI]);
 
   const handleCheckIn = (id: string) => {
     if (!isNear) {
@@ -114,6 +141,7 @@ export default function App() {
               pois={filteredPOIs} 
               onSelectPOI={setSelectedPOI}
               visitedIds={userState.visitedIds}
+              userLocation={userLocation}
             />
 
             {/* UI Overlay */}
@@ -124,7 +152,7 @@ export default function App() {
               onShowFootprint={() => setShowFootprint(true)}
             />
 
-            {/* Bottom Floating Info (Optional) */}
+            {/* Bottom Floating Info */}
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] w-[90%] max-w-md">
               <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl flex items-center justify-between border border-white">
                 <div className="flex items-center gap-3">
@@ -132,8 +160,14 @@ export default function App() {
                     <MapPin size={20} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-gray-800">当前位置</h3>
-                    <p className="text-[10px] text-gray-500">昆明市 · 五华区</p>
+                    <h3 className={cn("text-sm font-bold", geoError ? "text-red-500" : "text-gray-800")}>
+                      {geoError || (userLocation ? '已获取位置' : '正在定位...')}
+                    </h3>
+                    <p className="text-[10px] text-gray-500">
+                      {userLocation 
+                        ? `${userLocation[0].toFixed(4)}, ${userLocation[1].toFixed(4)}` 
+                        : geoError ? '定位失败' : '昆明市 · 五华区'}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full">
@@ -148,7 +182,19 @@ export default function App() {
               poi={selectedPOI}
               onClose={() => setSelectedPOI(null)}
               onCheckIn={handleCheckIn}
+              onViewDetails={(poi) => {
+                setDetailPOI(poi);
+                setSelectedPOI(null);
+              }}
               isVisited={selectedPOI ? userState.visitedIds.includes(selectedPOI.id) : false}
+              isNear={isNear}
+            />
+
+            <POIDetailPage 
+              poi={detailPOI}
+              onClose={() => setDetailPOI(null)}
+              onCheckIn={handleCheckIn}
+              isVisited={detailPOI ? userState.visitedIds.includes(detailPOI.id) : false}
               isNear={isNear}
             />
 
